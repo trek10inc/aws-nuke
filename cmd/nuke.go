@@ -33,6 +33,7 @@ func NewNuke(params NukeParameters, account awsutil.Account) *Nuke {
 func (n *Nuke) Run() error {
 	var err error
 
+	fmt.Println("Running trek10inc/aws-nuke")
 	if n.Parameters.ForceSleep < 3 && n.Parameters.NoDryRun {
 		return fmt.Errorf("Value for --force-sleep cannot be less than 3 seconds if --no-dry-run is set. This is for your own protection.")
 	}
