@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -8,9 +10,14 @@ import (
 )
 
 type EC2VPCEndpoint struct {
-	svc  *ec2.EC2
-	id   *string
-	tags []*ec2.Tag
+	svc               *ec2.EC2
+	id                *string
+	vpcId             *string
+	state             *string
+	ownerId           *string
+	serviceName       *string
+	creationTimestamp *time.Time
+	tags              []*ec2.Tag
 }
 
 func init() {
@@ -43,9 +50,14 @@ func ListEC2VPCEndpoints(sess *session.Session) ([]Resource, error) {
 
 		for _, vpcEndpoint := range resp.VpcEndpoints {
 			resources = append(resources, &EC2VPCEndpoint{
-				svc:  svc,
-				id:   vpcEndpoint.VpcEndpointId,
-				tags: vpcEndpoint.Tags,
+				svc:               svc,
+				id:                vpcEndpoint.VpcEndpointId,
+				tags:              vpcEndpoint.Tags,
+				vpcId:             vpcEndpoint.VpcId,
+				state:             vpcEndpoint.State,
+				ownerId:           vpcEndpoint.OwnerId,
+				serviceName:       vpcEndpoint.ServiceName,
+				creationTimestamp: vpcEndpoint.CreationTimestamp,
 			})
 		}
 	}
@@ -68,6 +80,12 @@ func (endpoint *EC2VPCEndpoint) Remove() error {
 
 func (e *EC2VPCEndpoint) Properties() types.Properties {
 	properties := types.NewProperties()
+	properties.Set("ID", e.id)
+	properties.Set("VpcId", e.vpcId)
+	properties.Set("State", e.state)
+	properties.Set("OwnerId", e.ownerId)
+	properties.Set("ServiceName", e.serviceName)
+	properties.Set("CreationTimestamp", e.creationTimestamp.Format(time.RFC3339))
 	for _, tagValue := range e.tags {
 		properties.SetTag(tagValue.Key, tagValue.Value)
 	}
