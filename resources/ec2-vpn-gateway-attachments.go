@@ -49,6 +49,7 @@ func ListEC2VPNGatewayAttachments(sess *session.Session) ([]Resource, error) {
 		for _, vgw := range resp.VpnGateways {
 			resources = append(resources, &EC2VPNGatewayAttachment{
 				svc:     svc,
+				state:   *vgw.State,
 				vpcId:   *vpc.VpcId,
 				vpnId:   *vgw.VpnGatewayId,
 				vpcTags: vpc.Tags,
@@ -83,6 +84,8 @@ func (v *EC2VPNGatewayAttachment) Remove() error {
 
 func (v *EC2VPNGatewayAttachment) Properties() types.Properties {
 	properties := types.NewProperties()
+	properties.Set("VpcId", v.vpcId)
+	properties.Set("VpnId", v.vpnId)
 	for _, tagValue := range v.vgwTags {
 		properties.SetTagWithPrefix("vgw", tagValue.Key, tagValue.Value)
 	}
