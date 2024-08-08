@@ -1,14 +1,20 @@
 package resources
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/appstream"
+	"github.com/rebuy-de/aws-nuke/v2/pkg/types"
 )
 
 type AppStreamImageBuilder struct {
-	svc  *appstream.AppStream
-	name *string
+	svc         *appstream.AppStream
+	name        *string
+	tags        map[string]*string
+	state       *string
+	createdTime *time.Time
 }
 
 func init() {
@@ -30,9 +36,20 @@ func ListAppStreamImageBuilders(sess *session.Session) ([]Resource, error) {
 		}
 
 		for _, imageBuilder := range output.ImageBuilders {
+			listTagsParams := &appstream.ListTagsForResourceInput{
+				ResourceArn: imageBuilder.Arn,
+			}
+			tags, err := svc.ListTagsForResource(listTagsParams)
+			if err != nil {
+				return nil, err
+			}
+
 			resources = append(resources, &AppStreamImageBuilder{
-				svc:  svc,
-				name: imageBuilder.Name,
+				svc:         svc,
+				name:        imageBuilder.Name,
+				tags:        tags.Tags,
+				state:       imageBuilder.State,
+				createdTime: imageBuilder.CreatedTime,
 			})
 		}
 
@@ -53,6 +70,18 @@ func (f *AppStreamImageBuilder) Remove() error {
 	})
 
 	return err
+}
+
+func (f *AppStreamImageBuilder) Properties() types.Properties {
+	properties := types.NewProperties()
+	properties.Set("Name", f.name)
+	properties.Set("State", f.state)
+	properties.Set("CreatedTime", f.createdTime.Format(time.RFC3339))
+
+	for key, val := range f.tags {
+		properties.SetTag(&key, val)
+	}
+	return properties
 }
 
 func (f *AppStreamImageBuilder) String() string {
