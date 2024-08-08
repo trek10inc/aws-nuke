@@ -5,12 +5,15 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/rebuy-de/aws-nuke/v2/pkg/types"
 )
 
 type EC2VPNGateway struct {
-	svc   *ec2.EC2
-	id    string
-	state string
+	svc         *ec2.EC2
+	id          string
+	state       string
+	gatewayType string
+	tags        []*ec2.Tag
 }
 
 func init() {
@@ -28,10 +31,13 @@ func ListEC2VPNGateways(sess *session.Session) ([]Resource, error) {
 
 	resources := make([]Resource, 0)
 	for _, out := range resp.VpnGateways {
+
 		resources = append(resources, &EC2VPNGateway{
-			svc:   svc,
-			id:    *out.VpnGatewayId,
-			state: *out.State,
+			svc:         svc,
+			id:          *out.VpnGatewayId,
+			state:       *out.State,
+			gatewayType: *out.Type,
+			tags:        out.Tags,
 		})
 	}
 
@@ -60,4 +66,16 @@ func (v *EC2VPNGateway) Remove() error {
 
 func (v *EC2VPNGateway) String() string {
 	return v.id
+}
+
+func (i *EC2VPNGateway) Properties() types.Properties {
+	properties := types.NewProperties()
+	properties.Set("ID", i.id)
+	properties.Set("State", i.state)
+
+	for _, tag := range i.tags {
+		properties.SetTag(tag.Key, tag.Value)
+	}
+
+	return properties
 }
