@@ -1,13 +1,18 @@
 package resources
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/appstream"
+	"github.com/rebuy-de/aws-nuke/v2/pkg/types"
 )
 
 type AppStreamStack struct {
-	svc  *appstream.AppStream
-	name *string
+	svc         *appstream.AppStream
+	name        *string
+	createdTime *time.Time
+	tags        map[string]*string
 }
 
 func init() {
@@ -27,9 +32,18 @@ func ListAppStreamStacks(sess *session.Session) ([]Resource, error) {
 		}
 
 		for _, stack := range output.Stacks {
+			listTagsParams := &appstream.ListTagsForResourceInput{
+				ResourceArn: stack.Arn,
+			}
+			tags, err := svc.ListTagsForResource(listTagsParams)
+			if err != nil {
+				return nil, err
+			}
 			resources = append(resources, &AppStreamStack{
-				svc:  svc,
-				name: stack.Name,
+				svc:         svc,
+				name:        stack.Name,
+				createdTime: stack.CreatedTime,
+				tags:        tags.Tags,
 			})
 		}
 
@@ -50,6 +64,16 @@ func (f *AppStreamStack) Remove() error {
 	})
 
 	return err
+}
+
+func (f *AppStreamStack) Properties() types.Properties {
+	properties := types.NewProperties()
+	properties.Set("Name", f.name)
+	properties.Set("CreatedTime", f.createdTime.Format(time.RFC3339))
+	for key, val := range f.tags {
+		properties.SetTag(&key, val)
+	}
+	return properties
 }
 
 func (f *AppStreamStack) String() string {
