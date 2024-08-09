@@ -24,17 +24,22 @@ func ListAppStreamImages(sess *session.Session) ([]Resource, error) {
 
 	params := &appstream.DescribeImagesInput{}
 
-	output, err := svc.DescribeImages(params)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, image := range output.Images {
-		resources = append(resources, &AppStreamImage{
-			svc:        svc,
-			name:       image.Name,
-			visibility: image.Visibility,
-		})
+	for {
+		output, err := svc.DescribeImages(params)
+		if err != nil {
+			return nil, err
+		}
+		for _, image := range output.Images {
+			resources = append(resources, &AppStreamImage{
+				svc:        svc,
+				name:       image.Name,
+				visibility: image.Visibility,
+			})
+		}
+		if output.NextToken == nil {
+			break
+		}
+		params.NextToken = output.NextToken
 	}
 
 	return resources, nil
