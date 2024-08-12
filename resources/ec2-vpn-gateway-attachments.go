@@ -62,6 +62,9 @@ func ListEC2VPNGatewayAttachments(sess *session.Session) ([]Resource, error) {
 }
 
 func (v *EC2VPNGatewayAttachment) Filter() error {
+	if v.state == "deleted" {
+		return fmt.Errorf("already deleted")
+	}
 	if v.state == "detached" {
 		return fmt.Errorf("already detached")
 	}
