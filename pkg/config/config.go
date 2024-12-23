@@ -45,6 +45,7 @@ type FeatureFlags struct {
 }
 
 type DisableDeletionProtection struct {
+	DynamoDBTable       bool `yaml:"DynamoDBTable"`
 	RDSInstance         bool `yaml:"RDSInstance"`
 	EC2Instance         bool `yaml:"EC2Instance"`
 	CloudformationStack bool `yaml:"CloudformationStack"`
