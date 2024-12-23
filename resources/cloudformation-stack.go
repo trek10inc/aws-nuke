@@ -143,6 +143,7 @@ func (cfs *CloudFormationStack) doRemove() error {
 		_, err = cfs.svc.DeleteStack(&cloudformation.DeleteStackInput{
 			StackName:       cfs.stack.StackName,
 			RetainResources: retain,
+			RoleARN:         &cfs.featureFlags.CloudFormationExecutionRole,
 		})
 		if err != nil {
 			return err
@@ -155,6 +156,7 @@ func (cfs *CloudFormationStack) doRemove() error {
 			return err
 		} else if _, err := cfs.svc.DeleteStack(&cloudformation.DeleteStackInput{
 			StackName: cfs.stack.StackName,
+			RoleARN:   &cfs.featureFlags.CloudFormationExecutionRole,
 		}); err != nil {
 			return err
 		} else if err := cfs.svc.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{
