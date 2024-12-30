@@ -13,6 +13,7 @@ type IAMServiceSpecificCredential struct {
 	serviceName string
 	id          string
 	userName    string
+	userTags    []*iam.Tag
 }
 
 func init() {
@@ -49,6 +50,7 @@ func ListServiceSpecificCredentials(sess *session.Session) ([]Resource, error) {
 				serviceName: *credential.ServiceName,
 				id:          *credential.ServiceSpecificCredentialId,
 				userName:    user.name,
+				userTags:    user.tags,
 			})
 		}
 	}
@@ -72,6 +74,9 @@ func (e *IAMServiceSpecificCredential) Properties() types.Properties {
 	properties := types.NewProperties()
 	properties.Set("ServiceName", e.serviceName)
 	properties.Set("ID", e.id)
+	for _, tag := range e.userTags {
+		properties.SetTagWithPrefix("user", tag.Key, tag.Value)
+	}
 	return properties
 }
 

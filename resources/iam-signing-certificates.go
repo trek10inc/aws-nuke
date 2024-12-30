@@ -14,6 +14,7 @@ type IAMSigningCertificate struct {
 	certificateId *string
 	userName      *string
 	status        *string
+	userTags      []*iam.Tag
 }
 
 func init() {
@@ -48,6 +49,7 @@ func ListIAMSigningCertificates(sess *session.Session) ([]Resource, error) {
 					certificateId: signingCert.CertificateId,
 					userName:      signingCert.UserName,
 					status:        signingCert.Status,
+					userTags:      out.Tags,
 				})
 			}
 		}
@@ -71,10 +73,14 @@ func (i *IAMSigningCertificate) Remove() error {
 }
 
 func (i *IAMSigningCertificate) Properties() types.Properties {
-	return types.NewProperties().
+	properties := types.NewProperties().
 		Set("UserName", i.userName).
 		Set("CertificateId", i.certificateId).
 		Set("Status", i.status)
+	for _, tag := range i.userTags {
+		properties.SetTagWithPrefix("user", tag.Key, tag.Value)
+	}
+	return properties
 }
 
 func (i *IAMSigningCertificate) String() string {

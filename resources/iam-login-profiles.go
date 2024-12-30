@@ -9,8 +9,9 @@ import (
 )
 
 type IAMLoginProfile struct {
-	svc  *iam.IAM
-	name string
+	svc      *iam.IAM
+	name     string
+	userTags []*iam.Tag
 }
 
 func init() {
@@ -45,8 +46,9 @@ func ListIAMLoginProfiles(sess *session.Session) ([]Resource, error) {
 
 		if lpresp.LoginProfile != nil {
 			resources = append(resources, &IAMLoginProfile{
-				svc:  svc,
-				name: *out.UserName,
+				svc:      svc,
+				name:     *out.UserName,
+				userTags: out.Tags,
 			})
 		}
 	}
@@ -63,8 +65,12 @@ func (e *IAMLoginProfile) Remove() error {
 }
 
 func (e *IAMLoginProfile) Properties() types.Properties {
-	return types.NewProperties().
+	properties := types.NewProperties().
 		Set("UserName", e.name)
+	for _, tag := range e.userTags {
+		properties.SetTagWithPrefix("user", tag.Key, tag.Value)
+	}
+	return properties
 }
 
 func (e *IAMLoginProfile) String() string {
