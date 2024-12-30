@@ -12,6 +12,7 @@ type IAMUserGroupAttachment struct {
 	svc       *iam.IAM
 	groupName string
 	userName  string
+	userTags  []*iam.Tag
 }
 
 func init() {
@@ -27,10 +28,10 @@ func ListIAMUserGroupAttachments(sess *session.Session) ([]Resource, error) {
 	}
 
 	resources := make([]Resource, 0)
-	for _, role := range resp.Users {
+	for _, user := range resp.Users {
 		resp, err := svc.ListGroupsForUser(
 			&iam.ListGroupsForUserInput{
-				UserName: role.UserName,
+				UserName: user.UserName,
 			})
 		if err != nil {
 			return nil, err
@@ -40,7 +41,8 @@ func ListIAMUserGroupAttachments(sess *session.Session) ([]Resource, error) {
 			resources = append(resources, &IAMUserGroupAttachment{
 				svc:       svc,
 				groupName: *grp.GroupName,
-				userName:  *role.UserName,
+				userName:  *user.UserName,
+				userTags:  user.Tags,
 			})
 		}
 	}
@@ -66,7 +68,11 @@ func (e *IAMUserGroupAttachment) String() string {
 }
 
 func (e *IAMUserGroupAttachment) Properties() types.Properties {
-	return types.NewProperties().
+	properties := types.NewProperties().
 		Set("GroupName", e.groupName).
 		Set("UserName", e.userName)
+	for _, tag := range e.userTags {
+		properties.SetTagWithPrefix("user", tag.Key, tag.Value)
+	}
+	return properties
 }
