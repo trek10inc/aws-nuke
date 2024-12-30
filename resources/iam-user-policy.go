@@ -5,10 +5,12 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/rebuy-de/aws-nuke/v2/pkg/types"
 )
 
 type IAMUserPolicy struct {
 	svc        *iam.IAM
+	user       iam.User
 	userName   string
 	policyName string
 }
@@ -39,6 +41,7 @@ func ListIAMUserPolicies(sess *session.Session) ([]Resource, error) {
 				svc:        svc,
 				policyName: *policyName,
 				userName:   *user.UserName,
+				user:       *user,
 			})
 		}
 	}
@@ -57,6 +60,19 @@ func (e *IAMUserPolicy) Remove() error {
 	}
 
 	return nil
+}
+
+func (e *IAMUserPolicy) Properties() types.Properties {
+	properties := types.NewProperties().
+		Set("PolicyName", e.policyName).
+		Set("user:Arn", e.user.Arn).
+		Set("user:UserName", e.user.UserName).
+		Set("user:UserID", e.user.UserId)
+
+	for _, tagValue := range e.user.Tags {
+		properties.SetTagWithPrefix("user", tagValue.Key, tagValue.Value)
+	}
+	return properties
 }
 
 func (e *IAMUserPolicy) String() string {
