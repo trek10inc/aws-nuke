@@ -4,12 +4,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/rebuy-de/aws-nuke/v2/pkg/types"
+	"github.com/sirupsen/logrus"
 )
 
 type CognitoUserPool struct {
 	svc  *cognitoidentityprovider.CognitoIdentityProvider
 	name *string
 	id   *string
+	tags *cognitoidentityprovider.ListTagsForResourceOutput
 }
 
 func init() {
@@ -27,14 +30,27 @@ func ListCognitoUserPools(sess *session.Session) ([]Resource, error) {
 	for {
 		output, err := svc.ListUserPools(params)
 		if err != nil {
-			return nil, err
+			logrus.Errorf("Unable to list Cognito user pools: %w", err)
+			continue
 		}
 
 		for _, pool := range output.UserPools {
+			userPoolDescription, err := svc.DescribeUserPool(&cognitoidentityprovider.DescribeUserPoolInput{UserPoolId: pool.Id})
+			if err != nil {
+				return nil, err
+			}
+			tags, err := svc.ListTagsForResource(&cognitoidentityprovider.ListTagsForResourceInput{
+				ResourceArn: userPoolDescription.UserPool.Arn,
+			})
+			if err != nil {
+				return nil, err
+			}
+
 			resources = append(resources, &CognitoUserPool{
 				svc:  svc,
 				name: pool.Name,
 				id:   pool.Id,
+				tags: tags,
 			})
 		}
 
@@ -55,6 +71,16 @@ func (f *CognitoUserPool) Remove() error {
 	})
 
 	return err
+}
+
+func (i *CognitoUserPool) Properties() types.Properties {
+	properties := types.NewProperties()
+	properties.Set("Name", i.name)
+	properties.Set("Identifier", i.id)
+	for key, tag := range i.tags.Tags {
+		properties.SetTag(&key, tag)
+	}
+	return properties
 }
 
 func (f *CognitoUserPool) String() string {

@@ -3,6 +3,7 @@ package resources
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/rebuy-de/aws-nuke/v2/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -11,6 +12,7 @@ type CognitoUserPoolDomain struct {
 	name         *string
 	userPoolName *string
 	userPoolId   *string
+	userPoolTags *cognitoidentityprovider.ListTagsForResourceOutput
 }
 
 func init() {
@@ -50,6 +52,7 @@ func ListCognitoUserPoolDomains(sess *session.Session) ([]Resource, error) {
 			name:         userPoolDetails.UserPool.Domain,
 			userPoolName: userPool.name,
 			userPoolId:   userPool.id,
+			userPoolTags: userPool.tags,
 		})
 	}
 
@@ -64,6 +67,16 @@ func (f *CognitoUserPoolDomain) Remove() error {
 	_, err := f.svc.DeleteUserPoolDomain(params)
 
 	return err
+}
+
+func (p *CognitoUserPoolDomain) Properties() types.Properties {
+	properties := types.NewProperties()
+	properties.Set("Name", p.name)
+	properties.Set("UserPoolName", p.userPoolName)
+	for key, tag := range p.userPoolTags.Tags {
+		properties.SetTag(&key, tag)
+	}
+	return properties
 }
 
 func (f *CognitoUserPoolDomain) String() string {

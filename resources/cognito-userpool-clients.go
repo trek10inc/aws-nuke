@@ -14,6 +14,7 @@ type CognitoUserPoolClient struct {
 	id           *string
 	userPoolName *string
 	userPoolId   *string
+	userPoolTags *cognitoidentityprovider.ListTagsForResourceOutput
 }
 
 func init() {
@@ -55,6 +56,7 @@ func ListCognitoUserPoolClients(sess *session.Session) ([]Resource, error) {
 					name:         client.ClientName,
 					userPoolName: userPool.name,
 					userPoolId:   userPool.id,
+					userPoolTags: userPool.tags,
 				})
 			}
 
@@ -84,6 +86,9 @@ func (p *CognitoUserPoolClient) Properties() types.Properties {
 	properties.Set("ID", p.id)
 	properties.Set("Name", p.name)
 	properties.Set("UserPoolName", p.userPoolName)
+	for key, tag := range p.userPoolTags.Tags {
+		properties.SetTag(&key, tag)
+	}
 	return properties
 }
 
