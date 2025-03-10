@@ -30,20 +30,20 @@ func ListCognitoUserPools(sess *session.Session) ([]Resource, error) {
 	for {
 		output, err := svc.ListUserPools(params)
 		if err != nil {
-			logrus.Errorf("Unable to list Cognito user pools: %w", err)
+			logrus.Errorf("Unable to list Cognito user pools: %v", err)
 			continue
 		}
 
 		for _, pool := range output.UserPools {
 			userPoolDescription, err := svc.DescribeUserPool(&cognitoidentityprovider.DescribeUserPoolInput{UserPoolId: pool.Id})
 			if err != nil {
-				return nil, err
+				continue
 			}
 			tags, err := svc.ListTagsForResource(&cognitoidentityprovider.ListTagsForResourceInput{
 				ResourceArn: userPoolDescription.UserPool.Arn,
 			})
 			if err != nil {
-				return nil, err
+				continue
 			}
 
 			resources = append(resources, &CognitoUserPool{
