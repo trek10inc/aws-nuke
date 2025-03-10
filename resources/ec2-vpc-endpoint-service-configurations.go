@@ -66,6 +66,7 @@ func (e *EC2VPCEndpointServiceConfiguration) Remove() error {
 func (e *EC2VPCEndpointServiceConfiguration) Properties() types.Properties {
 	properties := types.NewProperties()
 	properties.Set("Name", e.name)
+	properties.Set("Id", e.id)
 	for _, tag := range e.tags {
 		properties.SetTag(tag.Key, tag.Value)
 	}
