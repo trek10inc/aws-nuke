@@ -10,6 +10,7 @@ import (
 type RedshiftServerlessNamespace struct {
 	svc       *redshiftserverless.RedshiftServerless
 	namespace *redshiftserverless.Namespace
+	tags      []*redshiftserverless.Tag
 }
 
 func init() {
@@ -31,9 +32,16 @@ func ListRedshiftServerlessNamespaces(sess *session.Session) ([]Resource, error)
 		}
 
 		for _, namespace := range output.Namespaces {
+			tag_output, err := svc.ListTagsForResource(&redshiftserverless.ListTagsForResourceInput{
+				ResourceArn: namespace.NamespaceArn,
+			})
+			if err != nil {
+				return nil, err
+			}
 			resources = append(resources, &RedshiftServerlessNamespace{
 				svc:       svc,
 				namespace: namespace,
+				tags:      tag_output.Tags,
 			})
 		}
 
@@ -51,6 +59,10 @@ func (n *RedshiftServerlessNamespace) Properties() types.Properties {
 	properties := types.NewProperties().
 		Set("CreationDate", n.namespace.CreationDate).
 		Set("NamespaceName", n.namespace.NamespaceName)
+
+	for _, tag := range n.tags {
+		properties.SetTag(tag.Key, tag.Value)
+	}
 
 	return properties
 }

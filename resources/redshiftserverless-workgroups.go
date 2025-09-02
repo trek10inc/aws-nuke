@@ -10,6 +10,7 @@ import (
 type RedshiftServerlessWorkgroup struct {
 	svc       *redshiftserverless.RedshiftServerless
 	workgroup *redshiftserverless.Workgroup
+	tags      []*redshiftserverless.Tag
 }
 
 func init() {
@@ -31,9 +32,16 @@ func ListRedshiftServerlessWorkgroups(sess *session.Session) ([]Resource, error)
 		}
 
 		for _, workgroup := range output.Workgroups {
+			tag_output, err := svc.ListTagsForResource(&redshiftserverless.ListTagsForResourceInput{
+				ResourceArn: workgroup.WorkgroupArn,
+			})
+			if err != nil {
+				return nil, err
+			}
 			resources = append(resources, &RedshiftServerlessWorkgroup{
 				svc:       svc,
 				workgroup: workgroup,
+				tags:      tag_output.Tags,
 			})
 		}
 
@@ -52,6 +60,10 @@ func (w *RedshiftServerlessWorkgroup) Properties() types.Properties {
 		Set("CreationDate", w.workgroup.CreationDate).
 		Set("Namespace", w.workgroup.NamespaceName).
 		Set("WorkgroupName", w.workgroup.WorkgroupName)
+
+	for _, tag := range w.tags {
+		properties.SetTag(tag.Key, tag.Value)
+	}
 
 	return properties
 }

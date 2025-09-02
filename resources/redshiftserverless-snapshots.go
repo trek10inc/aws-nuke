@@ -10,6 +10,7 @@ import (
 type RedshiftServerlessSnapshot struct {
 	svc      *redshiftserverless.RedshiftServerless
 	snapshot *redshiftserverless.Snapshot
+	tags     []*redshiftserverless.Tag
 }
 
 func init() {
@@ -31,9 +32,16 @@ func ListRedshiftServerlessSnapshots(sess *session.Session) ([]Resource, error) 
 		}
 
 		for _, snapshot := range output.Snapshots {
+			tag_output, err := svc.ListTagsForResource(&redshiftserverless.ListTagsForResourceInput{
+				ResourceArn: snapshot.SnapshotArn,
+			})
+			if err != nil {
+				return nil, err
+			}
 			resources = append(resources, &RedshiftServerlessSnapshot{
 				svc:      svc,
 				snapshot: snapshot,
+				tags:     tag_output.Tags,
 			})
 		}
 
@@ -53,6 +61,9 @@ func (s *RedshiftServerlessSnapshot) Properties() types.Properties {
 		Set("Namespace", s.snapshot.NamespaceName).
 		Set("SnapshotName", s.snapshot.SnapshotName)
 
+	for _, tag := range s.tags {
+		properties.SetTag(tag.Key, tag.Value)
+	}
 	return properties
 }
 
