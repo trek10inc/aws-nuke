@@ -33,7 +33,7 @@
           pname = "aws-nuke";
           version = "2.25.0";
           src = ./.;
-          vendorHash = "sha256-nYCRKEPVZxzeuleb/u7FVu1Kd8275RuWy7diA7aYrwo=";
+          vendorHash = "sha256-VyZ0DF//oVjlQFjIegZf4ITli3DS1IF99HHYYP18+4E=";
           doCheck = false;
         };
 

@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/mwaa"
 	"github.com/aws/aws-sdk-go/service/s3control"
 	"github.com/rebuy-de/aws-nuke/v2/pkg/config"
 	log "github.com/sirupsen/logrus"
@@ -225,6 +226,10 @@ func skipMissingServiceInRegionHandler(r *request.Request) {
 func skipGlobalHandler(global bool) func(r *request.Request) {
 	return func(r *request.Request) {
 		service := r.ClientInfo.ServiceName
+		if service == mwaa.ServiceName {
+			service = mwaa.EndpointsID
+			// Rewrite MWAA to proper EndpointsID
+		}
 		if service == s3control.ServiceName {
 			service = s3control.EndpointsID
 			// Rewrite S3 Control ServiceName to proper EndpointsID
