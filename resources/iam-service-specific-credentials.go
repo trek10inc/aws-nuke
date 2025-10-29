@@ -44,6 +44,10 @@ func ListServiceSpecificCredentials(sess *session.Session) ([]Resource, error) {
 		}
 
 		for _, credential := range serviceCredentials.ServiceSpecificCredentials {
+			if credential.ServiceUserName == nil {
+				unknown := "unknown"
+				credential.ServiceUserName = &unknown
+			}
 			resources = append(resources, &IAMServiceSpecificCredential{
 				svc:         svc,
 				name:        *credential.ServiceUserName,
